@@ -9,17 +9,17 @@ number:
 date:
 consensus: true
 v: 3
-area: WIT
-workgroup: MOQ Working Group
+area: ""
+workgroup: "Media Over QUIC"
 keyword:
  - end-to-end
  - media over quic
 venue:
-  group: MOQ
-  type: Working Group
-  mail: moq@ietf.org
-  arch: https://mailarchive.ietf.org/arch/browse/moq/
-  github: bifurcation/moq-e2ee
+  group: "Media Over QUIC"
+  type: ""
+  mail: "moq@ietf.org"
+  arch: "https://mailarchive.ietf.org/arch/browse/moq/"
+  github: "bifurcation/moq-e2ee"
 
 author:
  -

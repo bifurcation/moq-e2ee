@@ -47,7 +47,7 @@ author:
     organization: Cisco
     email: rlb@ipv.sx
  -
-    fullname: Suhas Nandakumar 
+    fullname: Suhas Nandakumar
     organization: Cisco
     email: snandaku@cisco.com
 

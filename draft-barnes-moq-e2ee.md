@@ -19,35 +19,37 @@
 # Change the file extension to match the format (.xml for XML, etc...)
 #
 ###
-title: "TODO - Your title"
-abbrev: "TODO - Abbreviation"
+title: "End-to-End Security for Media over QUIC"
+abbrev: "MOQ E2EE"
 category: info
 
-docname: draft-todo-yourname-protocol-latest
+docname: draft-barnes-moq-e2ee
 submissiontype: IETF  # also: "independent", "editorial", "IAB", or "IRTF"
 number:
 date:
 consensus: true
 v: 3
-area: AREA
-workgroup: WG Working Group
+area: WIT
+workgroup: MOQ Working Group
 keyword:
- - next generation
- - unicorn
- - sparkling distributed ledger
+ - end-to-end
+ - media over quic
 venue:
-  group: WG
+  group: MOQ
   type: Working Group
-  mail: WG@example.com
-  arch: https://example.com/WG
-  github: USER/REPO
-  latest: https://example.com/LATEST
+  mail: moq@ietf.org
+  arch: https://mailarchive.ietf.org/arch/browse/moq/
+  github: bifurcation/moq-e2ee
 
 author:
  -
-    fullname: Your Name Here
-    organization: Your Organization Here
-    email: your.email@example.com
+    fullname: Richard L. Barnes
+    organization: Cisco
+    email: rlb@ipv.sx
+ -
+    fullname: Suhas Nandakumar 
+    organization: Cisco
+    email: snandaku@cisco.com
 
 normative:
 

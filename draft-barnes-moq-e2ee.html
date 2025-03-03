@@ -1366,47 +1366,6 @@ A-&gt;Relay:   PUB group_ns/0 GotKey(1)<a href="#section-10-1" class="pilcrow">�
 Relay-&gt;A:   PUB group_ns/1 GotKey(1)
 A:          Install key for epoch 1 for encrypt
 ```<a href="#section-11-1" class="pilcrow">¶</a></p>
-<p id="section-11-2"><code>
-A-&gt;Origin: GET catalog
-Origin-&gt;A: catalog, incl. DS URL, welcome_namespace, group_namespace
-A-&gt;Relay:  SubscribeRequest(welcome_namespace)
-A-&gt;Relay:  SubscribeRequest(group_namespace)
-A-&gt;DS:     POST /join -&gt; key_package
-DS-&gt;A:     201 Created
-A: Create MLS group
-A-&gt;Relay: SubscribeEnd(welcome_namespace)
-A-&gt;Relay: PublishRequest(anything A wants to publish)
-</code><a href="#section-11-2" class="pilcrow">¶</a></p>
-<p id="section-11-3">Second member joins:<a href="#section-11-3" class="pilcrow">¶</a></p>
-<p id="section-11-4"><code>
-B-&gt;Origin: GET catalog
-Origin-&gt;B: catalog, incl. DS URL, welcome_namespace, request_namespace
-B-&gt;Relay: SubscribeRequest(welcome_namespace)
-B-&gt;Relay: SubscribeRequest(group_namespace)
-B-&gt;DS: POST /join -&gt; key_package
-DS-&gt;B: 202 Accepted
-DS-&gt;group_namespace: JoinRequest(key_package)
-B-&gt;DS: Commit(Add(key_package))
-</code><a href="#section-11-4" class="pilcrow">¶</a></p>
-<p id="section-11-5">Third member C joins in the same way.  A and B run a local algorithm to
-decide who will try to commit first, with DS acting as tie breaker.  To
-attempt a commit, a member POSTs to the DS.  If it's accepted, great; if
-it's rejected as stale, get the latest Commit and retry.  DS sends Commit
-out under <code>group_namespace</code>.<a href="#section-11-5" class="pilcrow">¶</a></p>
-<p id="section-11-6">B disconnects from the session:<a href="#section-11-6" class="pilcrow">¶</a></p>
-<p id="section-11-7"><code>
-B-&gt;DS: POST /leave -&gt; remove_proposal
-DS-&gt;B: 202 Accepted
-DS-&gt;group_namespace: LeaveRequest(remove_proposal)
-C-&gt;DS: Commit(Add(key_package))
-</code><a href="#section-11-7" class="pilcrow">¶</a></p>
-<p id="section-11-8">[[ We probably want to make Light MLS a part of this, so that broadcast-like
-sessions can be supported cheaply.  For example, subscribers could be light
-and publishers could be full clients. ]]<a href="#section-11-8" class="pilcrow">¶</a></p>
-<p id="section-11-9">[[ Or we could have a "Zoom-like" mode where you connect to some trusted key
-distributor and just get a key from them.  (Presumably with 1:1 MLS.)  But
-that has some other complexities, e.g., who is the KD?  Maybe this could be
-emulated with the same API? ]]<a href="#section-11-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="additional-catalog-information">

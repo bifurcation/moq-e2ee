@@ -95,6 +95,7 @@ DS->A:      201 Created {client_id: 0}
 # A creates the group locally, quits listening for Welcome
 A:          Create MLS group
 A->Relay:   SUB_END welcome_ns
+A->Relay:   ANN group_ns/0
 ```
 
 Second member joins
@@ -123,11 +124,23 @@ DS->Relay:  PUB welcome_ns Welcome(welcome)
 Relay->B:   PUB group_ns/ds Commit(commit)
 Relay->B:   PUB welcome_ns/ds/seq Welcome(welcome)
 B:          Initialize MLS state with Welcome
+B:          Install key for epoch 1 for decrypt
+B:          Install key for epoch 1 for encrypt
 B->Relay:   SUB_END welcome_ns
+B->Relay:   ANN group_ns/1
+B->Relay:   PUB group_ns/1 GotKey(1)
 
 # A sees that its commit has been processed, and updates its state
 Relay->A:   PUB group_ns/ds Commit(commit)
 Relay->A:   PUB welcome_ns/ds/seq Welcome(welcome)
+A:          Update to next state
+A:          Install key for epoch 1 for decrypt
+A->Relay:   PUB group_ns/0 GotKey(1)
+
+# A and B each see that the other has the key, so it's safe to start using it
+Relay->B:   PUB group_ns/0 GotKey(1) [ignored]
+Relay->A:   PUB group_ns/1 GotKey(1)
+A:          Install key for epoch 1 for encrypt
 ```
 
 

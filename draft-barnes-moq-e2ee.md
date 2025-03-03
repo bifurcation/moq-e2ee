@@ -44,13 +44,28 @@ to be opaque to relays.  However, the base MoQ protocol does not assure this
 property cryptographically.  This document defines a scheme for authorized
 endpoints in a MoQ session to establish keys that are not accessible to relays,
 and to use those keys to encrypt MoQ objects so that relays cannot examine their
-content. 
+content.
 
 --- middle
 
 # Introduction
 
-TODO Introduction
+Media Over QUIC Transport (MOQT) provides a simple protocol for distributing
+media objects over a network of relays {{!I-D.ietf-moq-transport}}.  The
+content of MoQ objects is supposed to be opaque to relays.  However, the base
+MoQ protocol does not assure this property cryptographically.  This document
+defines a scheme for authorized endpoints in a MoQ session to establish keys
+that are not accessible to relays, and to use those keys to encrypt MoQ objects
+so that relays cannot examine their content.
+
+End-to-end encryption keys are established using the Messaging Layer Security
+protocol (MLS) {{!RFC9420}}.  MOQT clients exchange MLS messages in order to
+establish keys that are known only to the clients participating in a session,
+and to authenticate the participating clients.  Keys derived from MLS are then
+used to encrypt MoQ objects via the MoQ Secure Objects encapsulation
+{{!I-D.jennings-moq-secure-objects}}.
+
+
 
 # Conventions and Definitions
 
@@ -58,15 +73,72 @@ TODO Introduction
 
 # Protocol Overview
 
+Setup (e.g., in Catalog):
+
+```
+$GROUP_URL  -- HTTP resource providing DS for this group
+welcome_ns  -- Namespace within which Welcome messages will be sent for this group
+group_ns    -- Namespace within which group events will be sent for this group
+```
+
 First member joins:
+
+```
+# A asks to join
+A->Relay:   SUB group_ns
+A->Relay:   SUB welcome_ns
+A->DS:      $GROUP_URL/join
+
+# DS tells A that A is the first member
+DS->A:      201 Created {client_id: 0}
+
+# A creates the group locally, quits listening for Welcome
+A:          Create MLS group
+A->Relay:   SUB_END welcome_ns
+```
+
+Second member joins
+
+```
+# B asks to join
+B->Relay:   SUB group_ns
+B->Relay:   SUB welcome_ns
+B->DS:      $GROUP_URL/join
+
+# DS tells B that B needs to ask to join, and assigns B a client_id
+DS->B:      202 Accepted {client_id: 1}
+
+# B asks to join
+B->Relay:   ANN group_ns/1
+B->Relay:   PUB group_ns/1/seq JoinRequest(key_package)
+Relay->A:   PUB group_ns/1/seq JoinRequest(key_package)
+
+# A makes a commit to add B
+A->DS:      $GROUP_URL/commit {commit: base64url(commit), welcome: base64url(welcome)}
+DS->A:      202 Accepted
+DS->Relay:  PUB group_ns/ds Commit(commit)
+DS->Relay:  PUB welcome_ns Welcome(welcome)
+
+# B ignores the commit and joins with the Welcome
+Relay->B:   PUB group_ns/ds Commit(commit)
+Relay->B:   PUB welcome_ns/ds/seq Welcome(welcome)
+B:          Initialize MLS state with Welcome
+B->Relay:   SUB_END welcome_ns
+
+# A sees that its commit has been processed, and updates its state
+Relay->A:   PUB group_ns/ds Commit(commit)
+Relay->A:   PUB welcome_ns/ds/seq Welcome(welcome)
+```
+
+
 
 ```
 A->Origin: GET catalog
 Origin->A: catalog, incl. DS URL, welcome_namespace, group_namespace
-A->Relay: SubscribeRequest(welcome_namespace)
-A->Relay: SubscribeRequest(group_namespace)
-A->DS: POST /join -> key_package
-DS->A: 201 Created
+A->Relay:  SubscribeRequest(welcome_namespace)
+A->Relay:  SubscribeRequest(group_namespace)
+A->DS:     POST /join -> key_package
+DS->A:     201 Created
 A: Create MLS group
 A->Relay: SubscribeEnd(welcome_namespace)
 A->Relay: PublishRequest(anything A wants to publish)
@@ -85,7 +157,7 @@ DS->group_namespace: JoinRequest(key_package)
 B->DS: Commit(Add(key_package))
 ```
 
-Third member C joins in the same way.  A and B run a local algorithm to 
+Third member C joins in the same way.  A and B run a local algorithm to
 decide who will try to commit first, with DS acting as tie breaker.  To
 attempt a commit, a member POSTs to the DS.  If it's accepted, great; if
 it's rejected as stale, get the latest Commit and retry.  DS sends Commit
@@ -123,8 +195,8 @@ POST /leave
 POST /commit
 ```
 
-* Prospective joiners send KeyPackage to /join 
-* Prospective leavers send Remove proposal to /leave 
+* Prospective joiners send KeyPackage to /join
+* Prospective leavers send Remove proposal to /leave
 * ... possibly also DS to clean up stale participants
 * DS internal state: Basically just current epoch
 * How does the ratchet tree get distributed?

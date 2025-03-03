@@ -2,27 +2,34 @@
 
 
 
-MOQ Working Group                                           R. L. Barnes
+Media Over QUIC                                             R. L. Barnes
 Internet-Draft                                             S. Nandakumar
 Intended status: Informational                                     Cisco
-Expires: 31 August 2025                                 27 February 2025
+Expires: 4 September 2025                                   3 March 2025
 
 
                 End-to-End Security for Media over QUIC
-                         draft-barnes-moq-e2ee
+                      draft-barnes-moq-e2ee-latest
 
 Abstract
 
-   TODO Abstract
+   Media Over QUIC Transport (MOQT) provides a simple protocol for
+   distributing media objects over a network of relays.  The content of
+   MoQ objects is supposed to be opaque to relays.  However, the base
+   MoQ protocol does not assure this property cryptographically.  This
+   document defines a scheme for authorized endpoints in a MoQ session
+   to establish keys that are not accessible to relays, and to use those
+   keys to encrypt MoQ objects so that relays cannot examine their
+   content.
 
 About This Document
 
    This note is to be removed before publishing as an RFC.
 
    Status information for this document may be found at
-   https://datatracker.ietf.org/doc/draft-barnes-moq/.
+   https://datatracker.ietf.org/doc/draft-barnes-moq-e2ee/.
 
-   Discussion of this document takes place on the MOQ Working Group
+   Discussion of this document takes place on the Media Over QUIC
    mailing list (mailto:moq@ietf.org), which is archived at
    https://mailarchive.ietf.org/arch/browse/moq/.  Subscribe at
    https://www.ietf.org/mailman/listinfo/moq/.
@@ -45,7 +52,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 31 August 2025.
+   This Internet-Draft will expire on 4 September 2025.
 
 Copyright Notice
 
@@ -65,15 +72,44 @@ Table of Contents
 
    1.  Introduction
    2.  Conventions and Definitions
-   3.  Security Considerations
-   4.  IANA Considerations
-   5.  Normative References
+   3.  Protocol Overview
+   4.  DS tells A that A is the first member
+   5.  A creates the group locally, quits listening for Welcome
+   6.  DS tells B that B needs to ask to join, and assigns B a
+           client_id
+   7.  B asks to join
+   8.  A makes a commit to add B
+   9.  B ignores the commit and joins with the Welcome
+   10. A sees that its commit has been processed, and updates its
+           state
+   11. Additional Catalog Information
+   12. Key Establishment
+   13. Object Encryption
+   14. Identity
+   15. Security Considerations
+   16. IANA Considerations
+   17. Normative References
    Acknowledgments
    Authors' Addresses
 
 1.  Introduction
 
-   TODO Introduction
+   Media Over QUIC Transport (MOQT) provides a simple protocol for
+   distributing media objects over a network of relays
+   [I-D.ietf-moq-transport].  The content of MoQ objects is supposed to
+   be opaque to relays.  However, the base MoQ protocol does not assure
+   this property cryptographically.  This document defines a scheme for
+   authorized endpoints in a MoQ session to establish keys that are not
+   accessible to relays, and to use those keys to encrypt MoQ objects so
+   that relays cannot examine their content.
+
+   End-to-end encryption keys are established using the Messaging Layer
+   Security protocol (MLS) [RFC9420].  MOQT clients exchange MLS
+   messages in order to establish keys that are known only to the
+   clients participating in a session, and to authenticate the
+   participating clients.  Keys derived from MLS are then used to
+   encrypt MoQ objects via the MoQ Secure Objects encapsulation
+   [I-D.jennings-moq-secure-objects].
 
 2.  Conventions and Definitions
 
@@ -83,15 +119,157 @@ Table of Contents
    BCP 14 [RFC2119] [RFC8174] when, and only when, they appear in all
    capitals, as shown here.
 
-3.  Security Considerations
+3.  Protocol Overview
+
+   Setup (e.g., in Catalog):
+
+   $GROUP_URL -- HTTP resource providing DS for this group welcome_ns --
+   Namespace within which Welcome messages will be sent for this group
+   group_ns -- Namespace within which group events will be sent for this
+   group
+
+   First member joins:
+
+   ``` # A asks to join A->Relay: SUB group_ns A->Relay: SUB welcome_ns
+   A->DS: $GROUP_URL/join
+
+4.  DS tells A that A is the first member
+
+   DS->A: 201 Created {client_id: 0}
+
+5.  A creates the group locally, quits listening for Welcome
+
+   A: Create MLS group A->Relay: SUB_END welcome_ns ```
+
+   Second member joins
+
+   ``` # B asks to join B->Relay: SUB group_ns B->Relay: SUB welcome_ns
+   B->DS: $GROUP_URL/join
+
+6.  DS tells B that B needs to ask to join, and assigns B a client_id
+
+   DS->B: 202 Accepted {client_id: 1}
+
+7.  B asks to join
+
+   B->Relay: ANN group_ns/1 B->Relay: PUB group_ns/1/seq
+   JoinRequest(key_package) Relay->A: PUB group_ns/1/seq
+   JoinRequest(key_package)
+
+8.  A makes a commit to add B
+
+   A->DS: $GROUP_URL/commit {commit: base64url(commit), welcome:
+   base64url(welcome)} DS->A: 202 Accepted DS->Relay: PUB group_ns/ds
+   Commit(commit) DS->Relay: PUB welcome_ns Welcome(welcome)
+
+9.  B ignores the commit and joins with the Welcome
+
+   Relay->B: PUB group_ns/ds Commit(commit) Relay->B: PUB welcome_ns/ds/
+   seq Welcome(welcome) B: Initialize MLS state with Welcome B->Relay:
+   SUB_END welcome_ns
+
+10.  A sees that its commit has been processed, and updates its state
+
+   Relay->A: PUB group_ns/ds Commit(commit) Relay->A: PUB welcome_ns/ds/
+   seq Welcome(welcome) ```
+
+   A->Origin: GET catalog Origin->A: catalog, incl.  DS URL,
+   welcome_namespace, group_namespace A->Relay:
+   SubscribeRequest(welcome_namespace) A->Relay:
+   SubscribeRequest(group_namespace) A->DS: POST /join -> key_package
+   DS->A: 201 Created A: Create MLS group A->Relay:
+   SubscribeEnd(welcome_namespace) A->Relay: PublishRequest(anything A
+   wants to publish)
+
+   Second member joins:
+
+   B->Origin: GET catalog Origin->B: catalog, incl.  DS URL,
+   welcome_namespace, request_namespace B->Relay:
+   SubscribeRequest(welcome_namespace) B->Relay:
+   SubscribeRequest(group_namespace) B->DS: POST /join -> key_package
+   DS->B: 202 Accepted DS->group_namespace: JoinRequest(key_package)
+   B->DS: Commit(Add(key_package))
+
+   Third member C joins in the same way.  A and B run a local algorithm
+   to decide who will try to commit first, with DS acting as tie
+   breaker.  To attempt a commit, a member POSTs to the DS.  If it's
+   accepted, great; if it's rejected as stale, get the latest Commit and
+   retry.  DS sends Commit out under group_namespace.
+
+   B disconnects from the session:
+
+   B->DS: POST /leave -> remove_proposal DS->B: 202 Accepted
+   DS->group_namespace: LeaveRequest(remove_proposal) C->DS:
+   Commit(Add(key_package))
+
+   [[ We probably want to make Light MLS a part of this, so that
+   broadcast-like sessions can be supported cheaply.  For example,
+   subscribers could be light and publishers could be full clients. ]]
+
+   [[ Or we could have a "Zoom-like" mode where you connect to some
+   trusted key distributor and just get a key from them.  (Presumably
+   with 1:1 MLS.)  But that has some other complexities, e.g., who is
+   the KD?  Maybe this could be emulated with the same API? ]]
+
+11.  Additional Catalog Information
+
+   *  [[ URL, namespaces in catalog ]]
+
+12.  Key Establishment
+
+   welcome_namespace group_namespace POST /join POST /leave POST /commit
+
+   *  Prospective joiners send KeyPackage to /join
+
+   *  Prospective leavers send Remove proposal to /leave
+
+   *  ... possibly also DS to clean up stale participants
+
+   *  DS internal state: Basically just current epoch
+
+   *  How does the ratchet tree get distributed?
+
+      -  Included in Welcome
+
+      -  HTTP download from DS (masked?)
+
+      -  Some scheme for distributing it over MoQ
+
+13.  Object Encryption
+
+   *  [[ SFrame-like ]]
+
+14.  Identity
+
+   *  [[ Anonymous; just use public keys ]]
+
+   *  [[ Really whatever scheme the clients support, the servers don't
+      care ]]
+
+15.  Security Considerations
 
    TODO Security
 
-4.  IANA Considerations
+16.  IANA Considerations
 
    This document has no IANA actions.
 
-5.  Normative References
+17.  Normative References
+
+   [I-D.ietf-moq-transport]
+              Curley, L., Pugin, K., Nandakumar, S., Vasiliev, V., and
+              I. Swett, "Media over QUIC Transport", Work in Progress,
+              Internet-Draft, draft-ietf-moq-transport-09, 1 March 2025,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-moq-
+              transport-09>.
+
+   [I-D.jennings-moq-secure-objects]
+              Jennings, C. F., Nandakumar, S., and R. Barnes, "End-to-
+              End Secure Objects for Media over QUIC Transport", Work in
+              Progress, Internet-Draft, draft-jennings-moq-secure-
+              objects-02, 28 February 2025,
+              <https://datatracker.ietf.org/doc/html/draft-jennings-moq-
+              secure-objects-02>.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
@@ -101,6 +279,11 @@ Table of Contents
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
+
+   [RFC9420]  Barnes, R., Beurdouche, B., Robert, R., Millican, J.,
+              Omara, E., and K. Cohn-Gordon, "The Messaging Layer
+              Security (MLS) Protocol", RFC 9420, DOI 10.17487/RFC9420,
+              July 2023, <https://www.rfc-editor.org/rfc/rfc9420>.
 
 Acknowledgments
 

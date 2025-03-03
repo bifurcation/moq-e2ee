@@ -1315,8 +1315,8 @@ B-&gt;DS:      $GROUP_URL/join<a href="#section-5-3" class="pilcrow">¶</a></p>
 <a href="#section-7" class="section-number selfRef">7. </a><a href="#name-b-asks-to-join" class="section-name selfRef">B asks to join</a>
       </h2>
 <p id="section-7-1">B-&gt;Relay:   ANN group_ns/1
-B-&gt;Relay:   PUB group_ns/1/seq JoinRequest(key_package)
-Relay-&gt;A:   PUB group_ns/1/seq JoinRequest(key_package)<a href="#section-7-1" class="pilcrow">¶</a></p>
+B-&gt;Relay:   PUB group_ns/1 JoinRequest(key_package)
+Relay-&gt;A:   PUB group_ns/1 JoinRequest(key_package)<a href="#section-7-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="a-makes-a-commit-to-add-b">
@@ -1336,7 +1336,7 @@ DS-&gt;Relay:  PUB welcome_ns Welcome(welcome)<a href="#section-8-1" class="pilc
 <a href="#section-9" class="section-number selfRef">9. </a><a href="#name-b-ignores-the-commit-and-jo" class="section-name selfRef">B ignores the commit and joins with the Welcome</a>
       </h2>
 <p id="section-9-1">Relay-&gt;B:   PUB group_ns/ds Commit(commit)
-Relay-&gt;B:   PUB welcome_ns/ds/seq Welcome(welcome)
+Relay-&gt;B:   PUB welcome_ns/ds Welcome(welcome)
 B:          Initialize MLS state with Welcome
 B:          Install key for epoch 1 for decrypt
 B:          Install key for epoch 1 for encrypt
@@ -1351,7 +1351,7 @@ B-&gt;Relay:   PUB group_ns/1 GotKey(1)<a href="#section-9-1" class="pilcrow">¶
 <a href="#section-10" class="section-number selfRef">10. </a><a href="#name-a-sees-that-its-commit-has-" class="section-name selfRef">A sees that its commit has been processed, and updates its state</a>
       </h2>
 <p id="section-10-1">Relay-&gt;A:   PUB group_ns/ds Commit(commit)
-Relay-&gt;A:   PUB welcome_ns/ds/seq Welcome(welcome)
+Relay-&gt;A:   PUB welcome_ns/ds Welcome(welcome)
 A:          Update to next state
 A:          Install key for epoch 1 for decrypt
 A-&gt;Relay:   PUB group_ns/0 GotKey(1)<a href="#section-10-1" class="pilcrow">¶</a></p>

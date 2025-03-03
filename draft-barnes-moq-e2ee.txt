@@ -82,13 +82,15 @@ Table of Contents
    9.  B ignores the commit and joins with the Welcome
    10. A sees that its commit has been processed, and updates its
            state
-   11. Additional Catalog Information
-   12. Key Establishment
-   13. Object Encryption
-   14. Identity
-   15. Security Considerations
-   16. IANA Considerations
-   17. Normative References
+   11. A and B each see that the other has the key, so it's safe to
+           start using it
+   12. Additional Catalog Information
+   13. Key Establishment
+   14. Object Encryption
+   15. Identity
+   16. Security Considerations
+   17. IANA Considerations
+   18. Normative References
    Acknowledgments
    Authors' Addresses
 
@@ -139,7 +141,8 @@ Table of Contents
 
 5.  A creates the group locally, quits listening for Welcome
 
-   A: Create MLS group A->Relay: SUB_END welcome_ns ```
+   A: Create MLS group A->Relay: SUB_END welcome_ns A->Relay: ANN
+   group_ns/0 ```
 
    Second member joins
 
@@ -165,13 +168,22 @@ Table of Contents
 9.  B ignores the commit and joins with the Welcome
 
    Relay->B: PUB group_ns/ds Commit(commit) Relay->B: PUB welcome_ns/ds/
-   seq Welcome(welcome) B: Initialize MLS state with Welcome B->Relay:
-   SUB_END welcome_ns
+   seq Welcome(welcome) B: Initialize MLS state with Welcome B: Install
+   key for epoch 1 for decrypt B: Install key for epoch 1 for encrypt
+   B->Relay: SUB_END welcome_ns B->Relay: ANN group_ns/1 B->Relay: PUB
+   group_ns/1 GotKey(1)
 
 10.  A sees that its commit has been processed, and updates its state
 
    Relay->A: PUB group_ns/ds Commit(commit) Relay->A: PUB welcome_ns/ds/
-   seq Welcome(welcome) ```
+   seq Welcome(welcome) A: Update to next state A: Install key for epoch
+   1 for decrypt A->Relay: PUB group_ns/0 GotKey(1)
+
+11.  A and B each see that the other has the key, so it's safe to start
+     using it
+
+   Relay->B: PUB group_ns/0 GotKey(1) [ignored] Relay->A: PUB group_ns/1
+   GotKey(1) A: Install key for epoch 1 for encrypt ```
 
    A->Origin: GET catalog Origin->A: catalog, incl.  DS URL,
    welcome_namespace, group_namespace A->Relay:
@@ -211,11 +223,11 @@ Table of Contents
    with 1:1 MLS.)  But that has some other complexities, e.g., who is
    the KD?  Maybe this could be emulated with the same API? ]]
 
-11.  Additional Catalog Information
+12.  Additional Catalog Information
 
    *  [[ URL, namespaces in catalog ]]
 
-12.  Key Establishment
+13.  Key Establishment
 
    welcome_namespace group_namespace POST /join POST /leave POST /commit
 
@@ -235,26 +247,26 @@ Table of Contents
 
       -  Some scheme for distributing it over MoQ
 
-13.  Object Encryption
+14.  Object Encryption
 
    *  [[ SFrame-like ]]
 
-14.  Identity
+15.  Identity
 
    *  [[ Anonymous; just use public keys ]]
 
    *  [[ Really whatever scheme the clients support, the servers don't
       care ]]
 
-15.  Security Considerations
+16.  Security Considerations
 
    TODO Security
 
-16.  IANA Considerations
+17.  IANA Considerations
 
    This document has no IANA actions.
 
-17.  Normative References
+18.  Normative References
 
    [I-D.ietf-moq-transport]
               Curley, L., Pugin, K., Nandakumar, S., Vasiliev, V., and

@@ -1193,31 +1193,34 @@ content.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
             <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-a-sees-that-its-commit-has-" class="internal xref">A sees that its commit has been processed, and updates its state</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
-            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-additional-catalog-informat" class="internal xref">Additional Catalog Information</a></p>
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-a-and-b-each-see-that-the-o" class="internal xref">A and B each see that the other has the key, so it's safe to start using it</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
-            <p id="section-toc.1-1.12.1"><a href="#section-12" class="auto internal xref">12</a>. <a href="#name-key-establishment" class="internal xref">Key Establishment</a></p>
+            <p id="section-toc.1-1.12.1"><a href="#section-12" class="auto internal xref">12</a>. <a href="#name-additional-catalog-informat" class="internal xref">Additional Catalog Information</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
-            <p id="section-toc.1-1.13.1"><a href="#section-13" class="auto internal xref">13</a>. <a href="#name-object-encryption" class="internal xref">Object Encryption</a></p>
+            <p id="section-toc.1-1.13.1"><a href="#section-13" class="auto internal xref">13</a>. <a href="#name-key-establishment" class="internal xref">Key Establishment</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
-            <p id="section-toc.1-1.14.1"><a href="#section-14" class="auto internal xref">14</a>. <a href="#name-identity" class="internal xref">Identity</a></p>
+            <p id="section-toc.1-1.14.1"><a href="#section-14" class="auto internal xref">14</a>. <a href="#name-object-encryption" class="internal xref">Object Encryption</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
-            <p id="section-toc.1-1.15.1"><a href="#section-15" class="auto internal xref">15</a>. <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+            <p id="section-toc.1-1.15.1"><a href="#section-15" class="auto internal xref">15</a>. <a href="#name-identity" class="internal xref">Identity</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16">
-            <p id="section-toc.1-1.16.1"><a href="#section-16" class="auto internal xref">16</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+            <p id="section-toc.1-1.16.1"><a href="#section-16" class="auto internal xref">16</a>. <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17">
-            <p id="section-toc.1-1.17.1"><a href="#section-17" class="auto internal xref">17</a>. <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+            <p id="section-toc.1-1.17.1"><a href="#section-17" class="auto internal xref">17</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.18">
-            <p id="section-toc.1-1.18.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+            <p id="section-toc.1-1.18.1"><a href="#section-18" class="auto internal xref">18</a>. <a href="#name-normative-references" class="internal xref">Normative References</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.19">
-            <p id="section-toc.1-1.19.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
+            <p id="section-toc.1-1.19.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.20">
+            <p id="section-toc.1-1.20.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
 </li>
         </ul>
 </nav>
@@ -1288,6 +1291,7 @@ A-&gt;DS:      $GROUP_URL/join<a href="#section-3-4" class="pilcrow">¶</a></p>
       </h2>
 <p id="section-5-1">A:          Create MLS group
 A-&gt;Relay:   SUB_END welcome_ns
+A-&gt;Relay:   ANN group_ns/0
 ```<a href="#section-5-1" class="pilcrow">¶</a></p>
 <p id="section-5-2">Second member joins<a href="#section-5-2" class="pilcrow">¶</a></p>
 <p id="section-5-3">```
@@ -1334,7 +1338,11 @@ DS-&gt;Relay:  PUB welcome_ns Welcome(welcome)<a href="#section-8-1" class="pilc
 <p id="section-9-1">Relay-&gt;B:   PUB group_ns/ds Commit(commit)
 Relay-&gt;B:   PUB welcome_ns/ds/seq Welcome(welcome)
 B:          Initialize MLS state with Welcome
-B-&gt;Relay:   SUB_END welcome_ns<a href="#section-9-1" class="pilcrow">¶</a></p>
+B:          Install key for epoch 1 for decrypt
+B:          Install key for epoch 1 for encrypt
+B-&gt;Relay:   SUB_END welcome_ns
+B-&gt;Relay:   ANN group_ns/1
+B-&gt;Relay:   PUB group_ns/1 GotKey(1)<a href="#section-9-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="a-sees-that-its-commit-has-been-processed-and-updates-its-state">
@@ -1344,8 +1352,21 @@ B-&gt;Relay:   SUB_END welcome_ns<a href="#section-9-1" class="pilcrow">¶</a></
       </h2>
 <p id="section-10-1">Relay-&gt;A:   PUB group_ns/ds Commit(commit)
 Relay-&gt;A:   PUB welcome_ns/ds/seq Welcome(welcome)
-```<a href="#section-10-1" class="pilcrow">¶</a></p>
-<p id="section-10-2"><code>
+A:          Update to next state
+A:          Install key for epoch 1 for decrypt
+A-&gt;Relay:   PUB group_ns/0 GotKey(1)<a href="#section-10-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="a-and-b-each-see-that-the-other-has-the-key-so-its-safe-to-start-using-it">
+<section id="section-11">
+      <h2 id="name-a-and-b-each-see-that-the-o">
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-a-and-b-each-see-that-the-o" class="section-name selfRef">A and B each see that the other has the key, so it's safe to start using it</a>
+      </h2>
+<p id="section-11-1">Relay-&gt;B:   PUB group_ns/0 GotKey(1) [ignored]
+Relay-&gt;A:   PUB group_ns/1 GotKey(1)
+A:          Install key for epoch 1 for encrypt
+```<a href="#section-11-1" class="pilcrow">¶</a></p>
+<p id="section-11-2"><code>
 A-&gt;Origin: GET catalog
 Origin-&gt;A: catalog, incl. DS URL, welcome_namespace, group_namespace
 A-&gt;Relay:  SubscribeRequest(welcome_namespace)
@@ -1355,9 +1376,9 @@ DS-&gt;A:     201 Created
 A: Create MLS group
 A-&gt;Relay: SubscribeEnd(welcome_namespace)
 A-&gt;Relay: PublishRequest(anything A wants to publish)
-</code><a href="#section-10-2" class="pilcrow">¶</a></p>
-<p id="section-10-3">Second member joins:<a href="#section-10-3" class="pilcrow">¶</a></p>
-<p id="section-10-4"><code>
+</code><a href="#section-11-2" class="pilcrow">¶</a></p>
+<p id="section-11-3">Second member joins:<a href="#section-11-3" class="pilcrow">¶</a></p>
+<p id="section-11-4"><code>
 B-&gt;Origin: GET catalog
 Origin-&gt;B: catalog, incl. DS URL, welcome_namespace, request_namespace
 B-&gt;Relay: SubscribeRequest(welcome_namespace)
@@ -1366,76 +1387,76 @@ B-&gt;DS: POST /join -&gt; key_package
 DS-&gt;B: 202 Accepted
 DS-&gt;group_namespace: JoinRequest(key_package)
 B-&gt;DS: Commit(Add(key_package))
-</code><a href="#section-10-4" class="pilcrow">¶</a></p>
-<p id="section-10-5">Third member C joins in the same way.  A and B run a local algorithm to
+</code><a href="#section-11-4" class="pilcrow">¶</a></p>
+<p id="section-11-5">Third member C joins in the same way.  A and B run a local algorithm to
 decide who will try to commit first, with DS acting as tie breaker.  To
 attempt a commit, a member POSTs to the DS.  If it's accepted, great; if
 it's rejected as stale, get the latest Commit and retry.  DS sends Commit
-out under <code>group_namespace</code>.<a href="#section-10-5" class="pilcrow">¶</a></p>
-<p id="section-10-6">B disconnects from the session:<a href="#section-10-6" class="pilcrow">¶</a></p>
-<p id="section-10-7"><code>
+out under <code>group_namespace</code>.<a href="#section-11-5" class="pilcrow">¶</a></p>
+<p id="section-11-6">B disconnects from the session:<a href="#section-11-6" class="pilcrow">¶</a></p>
+<p id="section-11-7"><code>
 B-&gt;DS: POST /leave -&gt; remove_proposal
 DS-&gt;B: 202 Accepted
 DS-&gt;group_namespace: LeaveRequest(remove_proposal)
 C-&gt;DS: Commit(Add(key_package))
-</code><a href="#section-10-7" class="pilcrow">¶</a></p>
-<p id="section-10-8">[[ We probably want to make Light MLS a part of this, so that broadcast-like
+</code><a href="#section-11-7" class="pilcrow">¶</a></p>
+<p id="section-11-8">[[ We probably want to make Light MLS a part of this, so that broadcast-like
 sessions can be supported cheaply.  For example, subscribers could be light
-and publishers could be full clients. ]]<a href="#section-10-8" class="pilcrow">¶</a></p>
-<p id="section-10-9">[[ Or we could have a "Zoom-like" mode where you connect to some trusted key
+and publishers could be full clients. ]]<a href="#section-11-8" class="pilcrow">¶</a></p>
+<p id="section-11-9">[[ Or we could have a "Zoom-like" mode where you connect to some trusted key
 distributor and just get a key from them.  (Presumably with 1:1 MLS.)  But
 that has some other complexities, e.g., who is the KD?  Maybe this could be
-emulated with the same API? ]]<a href="#section-10-9" class="pilcrow">¶</a></p>
+emulated with the same API? ]]<a href="#section-11-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="additional-catalog-information">
-<section id="section-11">
+<section id="section-12">
       <h2 id="name-additional-catalog-informat">
-<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-additional-catalog-informat" class="section-name selfRef">Additional Catalog Information</a>
+<a href="#section-12" class="section-number selfRef">12. </a><a href="#name-additional-catalog-informat" class="section-name selfRef">Additional Catalog Information</a>
       </h2>
 <ul class="normal">
-<li class="normal" id="section-11-1.1">
-          <p id="section-11-1.1.1">[[ URL, namespaces in catalog ]]<a href="#section-11-1.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-12-1.1">
+          <p id="section-12-1.1.1">[[ URL, namespaces in catalog ]]<a href="#section-12-1.1.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 </section>
 </div>
 <div id="key-establishment">
-<section id="section-12">
+<section id="section-13">
       <h2 id="name-key-establishment">
-<a href="#section-12" class="section-number selfRef">12. </a><a href="#name-key-establishment" class="section-name selfRef">Key Establishment</a>
+<a href="#section-13" class="section-number selfRef">13. </a><a href="#name-key-establishment" class="section-name selfRef">Key Establishment</a>
       </h2>
-<p id="section-12-1"><code>
+<p id="section-13-1"><code>
 welcome_namespace
 group_namespace
 POST /join
 POST /leave
 POST /commit
-</code><a href="#section-12-1" class="pilcrow">¶</a></p>
+</code><a href="#section-13-1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-12-2.1">
-          <p id="section-12-2.1.1">Prospective joiners send KeyPackage to /join<a href="#section-12-2.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-13-2.1">
+          <p id="section-13-2.1.1">Prospective joiners send KeyPackage to /join<a href="#section-13-2.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-12-2.2">
-          <p id="section-12-2.2.1">Prospective leavers send Remove proposal to /leave<a href="#section-12-2.2.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-13-2.2">
+          <p id="section-13-2.2.1">Prospective leavers send Remove proposal to /leave<a href="#section-13-2.2.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-12-2.3">
-          <p id="section-12-2.3.1">... possibly also DS to clean up stale participants<a href="#section-12-2.3.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-13-2.3">
+          <p id="section-13-2.3.1">... possibly also DS to clean up stale participants<a href="#section-13-2.3.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-12-2.4">
-          <p id="section-12-2.4.1">DS internal state: Basically just current epoch<a href="#section-12-2.4.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-13-2.4">
+          <p id="section-13-2.4.1">DS internal state: Basically just current epoch<a href="#section-13-2.4.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-12-2.5">
-          <p id="section-12-2.5.1">How does the ratchet tree get distributed?<a href="#section-12-2.5.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-13-2.5">
+          <p id="section-13-2.5.1">How does the ratchet tree get distributed?<a href="#section-13-2.5.1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-12-2.5.2.1">
-              <p id="section-12-2.5.2.1.1">Included in Welcome<a href="#section-12-2.5.2.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-13-2.5.2.1">
+              <p id="section-13-2.5.2.1.1">Included in Welcome<a href="#section-13-2.5.2.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-12-2.5.2.2">
-              <p id="section-12-2.5.2.2.1">HTTP download from DS (masked?)<a href="#section-12-2.5.2.2.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-13-2.5.2.2">
+              <p id="section-13-2.5.2.2.1">HTTP download from DS (masked?)<a href="#section-13-2.5.2.2.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-12-2.5.2.3">
-              <p id="section-12-2.5.2.3.1">Some scheme for distributing it over MoQ<a href="#section-12-2.5.2.3.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-13-2.5.2.3">
+              <p id="section-13-2.5.2.3.1">Some scheme for distributing it over MoQ<a href="#section-13-2.5.2.3.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 </li>
@@ -1443,52 +1464,52 @@ POST /commit
 </section>
 </div>
 <div id="object-encryption">
-<section id="section-13">
+<section id="section-14">
       <h2 id="name-object-encryption">
-<a href="#section-13" class="section-number selfRef">13. </a><a href="#name-object-encryption" class="section-name selfRef">Object Encryption</a>
+<a href="#section-14" class="section-number selfRef">14. </a><a href="#name-object-encryption" class="section-name selfRef">Object Encryption</a>
       </h2>
 <ul class="normal">
-<li class="normal" id="section-13-1.1">
-          <p id="section-13-1.1.1">[[ SFrame-like ]]<a href="#section-13-1.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-14-1.1">
+          <p id="section-14-1.1.1">[[ SFrame-like ]]<a href="#section-14-1.1.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 </section>
 </div>
 <div id="identity">
-<section id="section-14">
+<section id="section-15">
       <h2 id="name-identity">
-<a href="#section-14" class="section-number selfRef">14. </a><a href="#name-identity" class="section-name selfRef">Identity</a>
+<a href="#section-15" class="section-number selfRef">15. </a><a href="#name-identity" class="section-name selfRef">Identity</a>
       </h2>
 <ul class="normal">
-<li class="normal" id="section-14-1.1">
-          <p id="section-14-1.1.1">[[ Anonymous; just use public keys ]]<a href="#section-14-1.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-15-1.1">
+          <p id="section-15-1.1.1">[[ Anonymous; just use public keys ]]<a href="#section-15-1.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-14-1.2">
-          <p id="section-14-1.2.1">[[ Really whatever scheme the clients support, the servers don't care ]]<a href="#section-14-1.2.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-15-1.2">
+          <p id="section-15-1.2.1">[[ Really whatever scheme the clients support, the servers don't care ]]<a href="#section-15-1.2.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 </section>
 </div>
 <div id="security-considerations">
-<section id="section-15">
+<section id="section-16">
       <h2 id="name-security-considerations">
-<a href="#section-15" class="section-number selfRef">15. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+<a href="#section-16" class="section-number selfRef">16. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
       </h2>
-<p id="section-15-1">TODO Security<a href="#section-15-1" class="pilcrow">¶</a></p>
+<p id="section-16-1">TODO Security<a href="#section-16-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="iana-considerations">
-<section id="section-16">
+<section id="section-17">
       <h2 id="name-iana-considerations">
-<a href="#section-16" class="section-number selfRef">16. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+<a href="#section-17" class="section-number selfRef">17. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
       </h2>
-<p id="section-16-1">This document has no IANA actions.<a href="#section-16-1" class="pilcrow">¶</a></p>
+<p id="section-17-1">This document has no IANA actions.<a href="#section-17-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-normative-references">
-<section id="section-17">
+<section id="section-18">
       <h2 id="name-normative-references">
-<a href="#section-17" class="section-number selfRef">17. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+<a href="#section-18" class="section-number selfRef">18. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
       </h2>
 <dl class="references">
 <dt id="I-D.ietf-moq-transport">[I-D.ietf-moq-transport]</dt>

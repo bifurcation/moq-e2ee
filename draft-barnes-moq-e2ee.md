@@ -111,8 +111,8 @@ DS->B:      202 Accepted {client_id: 1}
 
 # B asks to join
 B->Relay:   ANN group_ns/1
-B->Relay:   PUB group_ns/1/seq JoinRequest(key_package)
-Relay->A:   PUB group_ns/1/seq JoinRequest(key_package)
+B->Relay:   PUB group_ns/1 JoinRequest(key_package)
+Relay->A:   PUB group_ns/1 JoinRequest(key_package)
 
 # A makes a commit to add B
 A->DS:      $GROUP_URL/commit {commit: base64url(commit), welcome: base64url(welcome)}
@@ -122,7 +122,7 @@ DS->Relay:  PUB welcome_ns Welcome(welcome)
 
 # B ignores the commit and joins with the Welcome
 Relay->B:   PUB group_ns/ds Commit(commit)
-Relay->B:   PUB welcome_ns/ds/seq Welcome(welcome)
+Relay->B:   PUB welcome_ns/ds Welcome(welcome)
 B:          Initialize MLS state with Welcome
 B:          Install key for epoch 1 for decrypt
 B:          Install key for epoch 1 for encrypt
@@ -132,7 +132,7 @@ B->Relay:   PUB group_ns/1 GotKey(1)
 
 # A sees that its commit has been processed, and updates its state
 Relay->A:   PUB group_ns/ds Commit(commit)
-Relay->A:   PUB welcome_ns/ds/seq Welcome(welcome)
+Relay->A:   PUB welcome_ns/ds Welcome(welcome)
 A:          Update to next state
 A:          Install key for epoch 1 for decrypt
 A->Relay:   PUB group_ns/0 GotKey(1)

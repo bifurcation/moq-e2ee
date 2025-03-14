@@ -1,0 +1,33 @@
+[package]
+name = "moq-e2ee"
+description = "E2EE for Media over QUIC"
+authors = ["Richard Barnes"]
+repository = "https://github.com/bifurcation/moq-e2ee"
+license = "MIT OR Apache-2.0"
+
+version = "0.0.1"
+edition = "2021"
+
+keywords = ["quic", "http3", "webtransport", "media", "live"]
+categories = ["multimedia", "network-programming", "web-programming"]
+
+[dependencies]
+moq-native-ietf = { version = "0.5" }
+moq-transport = { version = "0.10" }
+
+# QUIC
+url = "2"
+
+# Async stuff
+tokio = { version = "1", features = ["full"] }
+
+# CLI, logging, error handling
+clap = { version = "4", features = ["derive"] }
+env_logger = "0.11"
+log = { version = "0.4", features = ["std"] }
+anyhow = { version = "1", features = ["backtrace"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+# CLOCK STUFF
+chrono = "0.4"

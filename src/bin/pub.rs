@@ -1,120 +1,98 @@
 use moq_native_ietf::quic;
 use std::net;
-use url::Url;
 
 use clap::Parser;
 
 use moq_transport::{coding::Tuple, serve, session::Publisher as MoqPublisher};
 
 use anyhow::Context;
-use moq_transport::serve::{Subgroup, SubgroupWriter, SubgroupsWriter};
+use moq_transport::serve::{Subgroup, SubgroupsWriter};
 
-use chrono::prelude::*;
+use axum::{extract::State, http::StatusCode, routing::post, Router};
+use std::sync::{Arc, Mutex};
+
 #[derive(Parser, Clone)]
 pub struct Cli {
-    /// Listen for UDP packets on the given address.
-    #[arg(long, default_value = "[::]:0")]
-    pub bind: net::SocketAddr,
-
-    /// Connect to the given URL starting with https://
-    #[arg()]
-    pub url: Url,
-
-    /// The TLS configuration.
+    /// Configuration options that are common to both the DS and the clients
     #[command(flatten)]
-    pub tls: moq_native_ietf::tls::Args,
+    pub common: moq_e2ee::Args,
 
-    /// Publish the current time to the relay, otherwise only subscribe.
-    #[arg(long)]
-    pub publish: bool,
+    /// Listen for HTTP connections on the given address.
+    /// TODO(RLB): Allow HTTPS configuration.
+    #[arg(long, default_value = "[::]:3000")]
+    pub http_bind: net::SocketAddr,
+}
 
-    /// The name of the clock track.
-    #[arg(long, default_value = "clock")]
-    pub namespace: String,
+struct PublisherState {
+    track: SubgroupsWriter,
+    seq: u64,
+}
 
-    /// The name of the clock track.
-    #[arg(long, default_value = "now")]
-    pub track: String,
+impl PublisherState {
+    fn send_string(&mut self, message: &str) {
+        let group_id = self.seq;
+        self.seq += 1;
+
+        let mut group = self
+            .track
+            .create(Subgroup {
+                group_id,
+                subgroup_id: 0,
+                priority: 0,
+            })
+            .context("failed to create minute segment")
+            .unwrap();
+
+        group
+            .write(message.to_string().into())
+            .context("failed to write")
+            .unwrap();
+
+        println!("send: {}", message);
+    }
 }
 
 pub struct Publisher {
-    track: SubgroupsWriter,
+    state: Arc<Mutex<PublisherState>>,
 }
 
 impl Publisher {
     pub fn new(track: SubgroupsWriter) -> Self {
-        Self { track }
-    }
-
-    pub async fn run(mut self) -> anyhow::Result<()> {
-        let start = Utc::now();
-        let mut now = start;
-
-        // Just for fun, don't start at zero.
-        let mut sequence = start.minute();
-
-        loop {
-            let segment = self
-                .track
-                .create(Subgroup {
-                    group_id: sequence as u64,
-                    subgroup_id: 0,
-                    priority: 0,
-                })
-                .context("failed to create minute segment")?;
-
-            sequence += 1;
-
-            tokio::spawn(async move {
-                if let Err(err) = Self::send_segment(segment, now).await {
-                    log::warn!("failed to send minute: {:?}", err);
-                }
-            });
-
-            let next = now + chrono::Duration::try_minutes(1).unwrap();
-            let next = next.with_second(0).unwrap().with_nanosecond(0).unwrap();
-
-            let delay = (next - now).to_std().unwrap();
-            tokio::time::sleep(delay).await;
-
-            now = next; // just assume we didn't undersleep
+        Self {
+            state: Arc::new(Mutex::new(PublisherState { track, seq: 0 })),
         }
     }
 
-    async fn send_segment(
-        mut segment: SubgroupWriter,
-        mut now: DateTime<Utc>,
-    ) -> anyhow::Result<()> {
-        // Everything but the second.
-        let base = now.format("%Y-%m-%d %H:%M:").to_string();
+    pub async fn run(&self) -> anyhow::Result<()> {
+        let app = Router::new()
+            .route("/join", post(join))
+            .route("/commit", post(commit))
+            .with_state(self.state.clone());
 
-        segment
-            .write(base.clone().into())
-            .context("failed to write base")?;
-
-        loop {
-            let delta = now.format("%S").to_string();
-            segment
-                .write(delta.clone().into())
-                .context("failed to write delta")?;
-
-            println!("{}{}", base, delta);
-
-            let next = now + chrono::Duration::try_seconds(1).unwrap();
-            let next = next.with_nanosecond(0).unwrap();
-
-            let delay = (next - now).to_std().unwrap();
-            tokio::time::sleep(delay).await;
-
-            // Get the current time again to check if we overslept
-            let next = Utc::now();
-            if next.minute() != now.minute() {
-                return Ok(());
-            }
-
-            now = next;
-        }
+        let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+        axum::serve(listener, app).await?;
+        Ok(())
     }
+}
+
+async fn join(State(state): State<Arc<Mutex<PublisherState>>>) -> StatusCode {
+    let Ok(mut state) = state.lock() else {
+        todo!();
+    };
+
+    state.send_string("join");
+
+    StatusCode::OK
+}
+
+async fn commit(State(state): State<Arc<Mutex<PublisherState>>>) -> StatusCode {
+    let Ok(mut state) = state.lock() else {
+        todo!();
+    };
+
+    state.send_string("commit");
+
+    StatusCode::OK
 }
 
 #[tokio::main]
@@ -128,27 +106,27 @@ async fn main() -> anyhow::Result<()> {
     tracing::subscriber::set_global_default(tracer).unwrap();
 
     let config = Cli::parse();
-    let tls = config.tls.load()?;
+    let tls = config.common.tls.load()?;
 
     let quic = quic::Endpoint::new(quic::Config {
-        bind: config.bind,
+        bind: config.common.bind,
         tls,
     })?;
 
-    log::info!("connecting to server: url={}", config.url);
+    log::info!("connecting to server: url={}", config.common.relay_url);
 
-    let session = quic.client.connect(&config.url).await?;
+    let session = quic.client.connect(&config.common.relay_url).await?;
 
     let (session, mut publisher) = MoqPublisher::connect(session)
         .await
         .context("failed to create MoQ Transport session")?;
 
     let (mut writer, _, reader) = serve::Tracks {
-        namespace: Tuple::from_utf8_path(&config.namespace),
+        namespace: Tuple::from_utf8_path(&config.common.namespace),
     }
     .produce();
 
-    let track = writer.create(&config.track).unwrap();
+    let track = writer.create(&config.common.welcome_track).unwrap();
     let clock = Publisher::new(track.groups()?);
 
     tokio::select! {

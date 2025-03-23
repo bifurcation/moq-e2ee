@@ -1,6 +1,7 @@
 use anyhow::Context;
 use moq_transport::serve::{TrackReader, TrackReaderMode};
 use reqwest::StatusCode;
+use std::sync::mpsc;
 use url::Url;
 
 use crate::messages::*;
@@ -11,6 +12,7 @@ pub struct Client {
     commit_url: Url,
     track: TrackReader,
     epoch: Option<u64>,
+    epochs: Option<mpsc::Sender<u64>>,
 }
 
 impl Client {
@@ -21,29 +23,41 @@ impl Client {
             commit_url,
             track,
             epoch: None,
+            epochs: None,
         }
     }
 
+    pub fn epochs(&mut self) -> mpsc::Receiver<u64> {
+        let (send, recv) = mpsc::channel();
+        self.epochs = Some(send);
+        recv
+    }
+
+    pub fn update_epoch(&mut self, epoch: u64) -> anyhow::Result<()> {
+        self.epoch = Some(epoch);
+
+        if let Some(epochs) = &self.epochs {
+            epochs.send(epoch)?;
+        }
+
+        Ok(())
+    }
+
     pub async fn run(mut self) -> anyhow::Result<()> {
-        println!("sending join request");
         let http_client = reqwest::Client::new();
         let res = http_client
-            .post(self.join_url)
+            .post(self.join_url.clone())
             .json(&JoinRequest {
                 name: self.name.clone(),
             })
             .send()
             .await?;
 
-        self.epoch = match res.status() {
+        match res.status() {
             StatusCode::CREATED => {
-                println!("creating group");
-                Some(0)
+                self.update_epoch(0)?;
             }
-            StatusCode::ACCEPTED => {
-                println!("awaiting Welcome");
-                None
-            }
+            StatusCode::ACCEPTED => {}
             _ => panic!("Unexpected status code in join request"),
         };
 
@@ -77,15 +91,13 @@ impl Client {
                             })
                             .send()
                             .await?;
-
-                        println!("sent Commit(Add({})) => {}", name, res.status());
                     }
                     GroupEvent::LeaveRequest(name) => {
                         let Some(epoch) = self.epoch else {
                             break;
                         };
 
-                        let res = http_client
+                        http_client
                             .post(self.commit_url.clone())
                             .json(&CommitRequest {
                                 commit: Commit {
@@ -96,23 +108,16 @@ impl Client {
                             })
                             .send()
                             .await?;
-
-                        println!("sent Commit(Remove({})) => {}", name, res.status());
                     }
                     GroupEvent::Commit(commit, welcome) => match (self.epoch, welcome) {
                         (Some(epoch), _) if epoch == commit.epoch => {
-                            // Handle the commit
-                            println!("handling commit {} => {}", epoch, epoch + 1);
-                            self.epoch = Some(epoch + 1);
+                            self.update_epoch(epoch + 1)?;
                         }
 
                         (None, Some(welcome)) if self.name == welcome.name => {
-                            println!("joining via welcome at {}", welcome.epoch);
-                            self.epoch = Some(welcome.epoch);
+                            self.update_epoch(welcome.epoch)?;
                         }
-                        _ => {
-                            println!("Ignored commit event");
-                        }
+                        _ => { /* ignore commit event */ }
                     },
                 }
             }

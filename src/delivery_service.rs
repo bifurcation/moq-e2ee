@@ -32,8 +32,6 @@ impl TrackWithSeq {
             .write(message.clone().into())
             .context("failed to write")
             .unwrap();
-
-        println!("send: {}", message);
     }
 }
 
@@ -44,12 +42,14 @@ struct DeliveryState {
 }
 
 pub struct DeliveryService {
+    bind: String,
     state: DeliveryState,
 }
 
 impl DeliveryService {
-    pub fn new(track: SubgroupsWriter) -> Self {
+    pub fn new(bind: String, track: SubgroupsWriter) -> Self {
         Self {
+            bind,
             state: DeliveryState {
                 epoch: Arc::new(Mutex::new(None)),
                 track: Arc::new(Mutex::new(TrackWithSeq {
@@ -66,7 +66,7 @@ impl DeliveryService {
             .route("/commit", post(commit))
             .with_state(self.state.clone());
 
-        let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+        let listener = tokio::net::TcpListener::bind(&self.bind).await?;
         axum::serve(listener, app).await?;
         Ok(())
     }
@@ -84,7 +84,6 @@ async fn join(
     }
 
     // Otherwise, ask the membership to add the new user
-    println!("PUB {:?}", join_request);
     let mut track = state.track.lock().unwrap();
     track.send(GroupEvent::JoinRequest(join_request.name));
     StatusCode::ACCEPTED
